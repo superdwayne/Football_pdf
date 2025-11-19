@@ -20,18 +20,15 @@ async function launchBrowser() {
       const chromium = await import("@sparticuz/chromium-min")
       const puppeteer = await import("puppeteer-core")
 
-      // Set Chromium path explicitly for Vercel
-      chromium.setGraphicsMode(false)
-
-      const executablePath = await chromium.executablePath()
+      const executablePath = await chromium.default.executablePath()
       
       console.log("Chromium executable path:", executablePath)
 
       return await puppeteer.default.launch({
-        args: chromium.args,
-        defaultViewport: chromium.defaultViewport,
+        args: chromium.default.args,
+        defaultViewport: chromium.default.defaultViewport,
         executablePath,
-        headless: chromium.headless,
+        headless: chromium.default.headless,
       })
     } catch (error) {
       console.error("Failed to launch Chromium on Vercel:", error)
