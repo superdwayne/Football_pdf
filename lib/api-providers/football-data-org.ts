@@ -105,10 +105,10 @@ export class FootballDataOrgProvider implements FootballApiProvider {
                     country: member.nationality || "",
                   },
                   nationality: member.nationality || "",
-                  height: null,
-                  weight: null,
+                  height: "",
+                  weight: "",
                   injured: false, // Football-Data.org doesn't provide injury status in squad
-                  photo: null,
+                  photo: "",
                 } as Player
               })
             
