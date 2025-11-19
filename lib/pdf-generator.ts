@@ -22,21 +22,9 @@ async function launchBrowser() {
 
       const chromiumDefault = chromium.default || chromium
       
-      // Get executable path - this may download/extract the binary if needed
-      let executablePath: string
-      try {
-        executablePath = await chromiumDefault.executablePath()
-        console.log("Chromium executable path:", executablePath)
-      } catch (pathError) {
-        console.error("Failed to get Chromium executable path:", pathError)
-        // Try alternative path resolution
-        executablePath = await chromiumDefault.executablePath({
-          path: "/tmp/chromium",
-        }).catch(() => {
-          // If that fails, try without path option
-          return chromiumDefault.executablePath()
-        })
-      }
+      // Get executable path - chromium-min handles binary extraction automatically
+      const executablePath = await chromiumDefault.executablePath()
+      console.log("Chromium executable path:", executablePath)
 
       console.log("Chromium args:", chromiumDefault.args)
 
