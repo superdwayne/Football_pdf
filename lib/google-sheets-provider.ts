@@ -11,9 +11,11 @@ function getAuth() {
     throw new Error("Google Sheets credentials are not configured")
   }
 
-  return new google.auth.JWT(clientEmail, undefined, privateKey, [
-    "https://www.googleapis.com/auth/spreadsheets.readonly",
-  ])
+  return new google.auth.JWT({
+    email: clientEmail,
+    key: privateKey,
+    scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+  })
 }
 
 const sheetsApi = google.sheets("v4")
