@@ -76,17 +76,22 @@ export class GoogleSheetsProvider {
 
     const performanceJson = get("Performance Data JSON")
 
+    const dob = get("Date of Birth") || get("DOB") || ""
     const player: Player = {
       id: index,
       name: get("Player Name") || get("Name"),
-      firstName: get("First Name") || "",
-      lastName: get("Last Name") || "",
+      firstname: get("First Name") || "",
+      lastname: get("Last Name") || "",
       age: Number(get("Age")) || 0,
-      dob: get("Date of Birth") || get("DOB") || "",
+      birth: {
+        date: dob,
+        place: "",
+        country: get("Nationality") || "",
+      },
+      nationality: get("Nationality") || "",
       height: get("Height") || "",
       weight: get("Weight") || "",
-      nationality: get("Nationality") || "",
-      preferredFoot: get("Preferred Foot") || null,
+      injured: false,
       photo: get("Photo URL") || "",
       currentTeam: get("Current Club")
         ? { name: get("Current Club") }
