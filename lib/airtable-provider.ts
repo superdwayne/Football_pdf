@@ -211,9 +211,10 @@ export class AirtableProvider {
               season: this.extractSeasonYear(season),
             },
             games: {
-              appearances: appearance.games || 0,
+              appearences: appearance.games || 0,
               lineups: appearance.games || 0,
               minutes: appearance.minutes || 0,
+              number: null,
               position: this.extractPositionFromPositions(record.fields["Positions Played"]),
               rating: seasonStats.averageRating || stats.averageRating.toString(),
               captain: false,
@@ -288,9 +289,10 @@ export class AirtableProvider {
             flag: "",
           },
           games: {
-            appearances: stats.totalGames,
+            appearences: stats.totalGames,
             lineups: stats.totalGames,
             minutes: stats.totalMinutes,
+            number: null,
             position: this.extractPositionFromPositions(record.fields["Positions Played"]),
             rating: stats.averageRating.toString(),
             captain: false,
