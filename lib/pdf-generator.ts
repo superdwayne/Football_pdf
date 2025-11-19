@@ -24,11 +24,13 @@ async function launchBrowser() {
       
       console.log("Chromium executable path:", executablePath)
 
+      const headlessValue = chromium.default.headless === true ? true : chromium.default.headless === "new" ? "shell" : true
+
       return await puppeteer.default.launch({
         args: chromium.default.args,
         defaultViewport: chromium.default.defaultViewport,
         executablePath,
-        headless: chromium.default.headless,
+        headless: headlessValue,
       })
     } catch (error) {
       console.error("Failed to launch Chromium on Vercel:", error)
