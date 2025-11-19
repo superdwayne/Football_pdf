@@ -126,7 +126,6 @@ export async function processPlayerUpdate(
     success: true,
     recordId,
     playerName,
-    note: "Use browser MCP to navigate, extract, then Airtable MCP to update"
   }
 }
 
