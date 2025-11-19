@@ -24,9 +24,15 @@ async function launchBrowser() {
       // chromium-min v141+ exports differently
       const chromiumInstance = chromium.default || chromium
       
-      // Get executable path - chromium-min downloads/extracts binary to /tmp on Vercel
-      // The executablePath() method handles the binary download and extraction automatically
-      const executablePath = await chromiumInstance.executablePath()
+      // Use remote Chromium executable to avoid bin directory issues on Vercel
+      // The remote path downloads and extracts the binary automatically
+      const REMOTE_CHROMIUM_PATH = process.env.CHROMIUM_REMOTE_EXEC_PATH || 
+        "https://github.com/Sparticuz/chromium/releases/download/v141.0.0/chromium-v141.0.0-pack.tar.br"
+      
+      console.log("Using remote Chromium executable:", REMOTE_CHROMIUM_PATH)
+      
+      // Get executable path - chromium-min downloads/extracts binary from remote URL
+      const executablePath = await chromiumInstance.executablePath(REMOTE_CHROMIUM_PATH)
       console.log("Chromium executable path:", executablePath)
 
       // Use chromium args for serverless environment
@@ -52,8 +58,8 @@ async function launchBrowser() {
       // Provide more helpful error message
       if (error instanceof Error && error.message.includes("does not exist")) {
         throw new Error(
-          `Chromium binary not found. This is a known issue with @sparticuz/chromium-min on Vercel. ` +
-          `The binary should be downloaded automatically on first use. ` +
+          `Chromium binary not found. Using remote Chromium executable should resolve this. ` +
+          `The binary will be downloaded automatically on first use. ` +
           `Please check Vercel function logs for more details. ` +
           `Original error: ${error.message}`
         )
