@@ -1,7 +1,7 @@
 // Execute workflow to update all players in Airtable with comprehensive data
 // This script processes each player: scrape → convert → update
 
-import { convertToAirtableFormat } from "./batch-scrape-players"
+import { convertToAirtableFormat } from "./batch-update-all-players"
 
 const AIRTABLE_BASE_ID = "appLkDMJZrxnOCpPF"
 const AIRTABLE_TABLE_ID = "tblwfa8UVh8Uoigp5"

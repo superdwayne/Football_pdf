@@ -1,7 +1,7 @@
 // Batch processing script to scrape players and save to Airtable
 // This script demonstrates the workflow for processing multiple players
 
-import { convertToAirtableFormat } from "./batch-scrape-players"
+import { convertToAirtableFormat } from "./batch-update-all-players"
 
 const AIRTABLE_BASE_ID = "appLkDMJZrxnOCpPF"
 const AIRTABLE_TABLE_ID = "tblwfa8UVh8Uoigp5"
