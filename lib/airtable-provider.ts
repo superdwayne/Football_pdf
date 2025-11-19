@@ -556,6 +556,7 @@ export class AirtableProvider {
       nationality: converted.nationality,
       height: fields["Height"] || "",
       weight: fields["Weight"] || "",
+      injured: false,
       photo: converted.photo,
     }
   }
