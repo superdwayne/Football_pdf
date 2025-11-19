@@ -24,9 +24,16 @@ async function launchBrowser() {
       // chromium-min exports the Chromium class as default
       const chromiumInstance = chromium.default || chromium
       
-      // Get executable path - this will download/extract the binary if needed
-      // The binary is stored in /tmp on Vercel serverless functions
-      const executablePath = await chromiumInstance.executablePath()
+      // Get executable path - chromium-min handles binary extraction
+      // If CHROMIUM_REMOTE_EXEC_PATH is set, use remote binary, otherwise use local
+      let executablePath: string
+      if (process.env.CHROMIUM_REMOTE_EXEC_PATH) {
+        executablePath = await chromiumInstance.executablePath(process.env.CHROMIUM_REMOTE_EXEC_PATH)
+        console.log("Using remote Chromium executable")
+      } else {
+        executablePath = await chromiumInstance.executablePath()
+        console.log("Using local Chromium executable")
+      }
       console.log("Chromium executable path:", executablePath)
 
       // Verify the path exists (chromium-min handles this, but we log for debugging)
