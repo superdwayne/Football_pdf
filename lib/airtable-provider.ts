@@ -251,7 +251,6 @@ export class AirtableProvider {
             dribbles: {
               attempts: seasonStats.dribblesAttempts || performanceData.dribbles?.attempts || 0,
               success: seasonStats.dribblesSuccess || performanceData.dribbles?.success || 0,
-              past: seasonStats.dribblesPast || performanceData.dribbles?.past || 0,
             },
             fouls: {
               drawn: seasonStats.foulsDrawn || performanceData.fouls?.drawn || 0,
