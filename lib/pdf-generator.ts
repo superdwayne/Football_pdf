@@ -17,22 +17,27 @@ async function launchBrowser() {
 
   if (isVercel) {
     try {
+      // Import chromium-min - it will handle binary extraction
       const chromium = await import("@sparticuz/chromium-min")
       const puppeteer = await import("puppeteer-core")
 
-      const chromiumDefault = chromium.default || chromium
+      // chromium-min exports the Chromium class as default
+      const chromiumInstance = chromium.default || chromium
       
-      // Get executable path - chromium-min handles binary extraction automatically
-      const executablePath = await chromiumDefault.executablePath()
+      // Get executable path - this will download/extract the binary if needed
+      // The binary is stored in /tmp on Vercel serverless functions
+      const executablePath = await chromiumInstance.executablePath()
       console.log("Chromium executable path:", executablePath)
 
-      console.log("Chromium args:", chromiumDefault.args)
+      // Verify the path exists (chromium-min handles this, but we log for debugging)
+      console.log("Chromium args:", chromiumInstance.args)
+      console.log("Chromium defaultViewport:", chromiumInstance.defaultViewport)
 
-      const headlessValue = chromiumDefault.headless === true ? true : chromiumDefault.headless === "new" ? "shell" : true
+      const headlessValue = chromiumInstance.headless === true ? true : chromiumInstance.headless === "new" ? "shell" : true
 
       return await puppeteer.default.launch({
-        args: chromiumDefault.args,
-        defaultViewport: chromiumDefault.defaultViewport,
+        args: chromiumInstance.args,
+        defaultViewport: chromiumInstance.defaultViewport,
         executablePath,
         headless: headlessValue,
       })
@@ -43,8 +48,9 @@ async function launchBrowser() {
       // Provide more helpful error message
       if (error instanceof Error && error.message.includes("does not exist")) {
         throw new Error(
-          `Chromium binary not found. This may be a Vercel deployment issue. ` +
-          `Please check that @sparticuz/chromium-min is properly installed. ` +
+          `Chromium binary not found. The @sparticuz/chromium-min package may need to download the binary at runtime. ` +
+          `This can happen on the first request. Please try again. ` +
+          `If the issue persists, check Vercel function logs for more details. ` +
           `Original error: ${error.message}`
         )
       }
