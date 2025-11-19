@@ -17,25 +17,36 @@ async function launchBrowser() {
 
   if (isVercel) {
     try {
+      console.log("🔧 Vercel environment detected, using chromium-min")
+      
       // Import chromium-min - it will handle binary extraction
       const chromium = await import("@sparticuz/chromium-min")
       const puppeteer = await import("puppeteer-core")
 
+      console.log("✅ Chromium and Puppeteer imported successfully")
+
       // chromium-min v141+ exports differently
       const chromiumInstance = chromium.default || chromium
       
-      // Use remote Chromium executable to avoid bin directory issues on Vercel
-      // The remote path downloads and extracts the binary automatically
-      const REMOTE_CHROMIUM_PATH = process.env.CHROMIUM_REMOTE_EXEC_PATH || 
-        "https://github.com/Sparticuz/chromium/releases/download/v141.0.0/chromium-v141.0.0-pack.tar.br"
+      console.log("📦 Chromium instance:", typeof chromiumInstance)
+      console.log("📦 Chromium methods:", Object.keys(chromiumInstance))
       
-      console.log("Using remote Chromium executable:", REMOTE_CHROMIUM_PATH)
-      
-      // Get executable path - chromium-min downloads/extracts binary from remote URL
-      const executablePath = await chromiumInstance.executablePath(REMOTE_CHROMIUM_PATH)
-      console.log("Chromium executable path:", executablePath)
+      // Try to get executable path - chromium-min handles binary download/extraction
+      let executablePath: string
+      try {
+        // First try without remote path (chromium-min should handle it automatically)
+        executablePath = await chromiumInstance.executablePath()
+        console.log("✅ Chromium executable path (local):", executablePath)
+      } catch (localError) {
+        console.log("⚠️ Local executable path failed, trying remote...")
+        // If local fails, try with remote URL
+        const REMOTE_CHROMIUM_PATH = process.env.CHROMIUM_REMOTE_EXEC_PATH || 
+          "https://github.com/Sparticuz/chromium/releases/download/v141.0.0/chromium-v141.0.0-pack.tar.br"
+        executablePath = await chromiumInstance.executablePath(REMOTE_CHROMIUM_PATH)
+        console.log("✅ Chromium executable path (remote):", executablePath)
+      }
 
-      // Use chromium args for serverless environment
+      // Get chromium args - these are optimized for serverless
       const args = chromiumInstance.args || [
         "--no-sandbox",
         "--disable-setuid-sandbox",
@@ -43,26 +54,43 @@ async function launchBrowser() {
         "--disable-accelerated-2d-canvas",
         "--disable-gpu",
         "--disable-web-security",
+        "--single-process",
       ]
 
-      return await puppeteer.default.launch({
+      console.log("🚀 Launching Puppeteer with Chromium...")
+      console.log("   Executable:", executablePath)
+      console.log("   Args count:", args.length)
+
+      const browser = await puppeteer.default.launch({
         args,
         defaultViewport: { width: 1920, height: 1080 },
         executablePath,
         headless: true,
+        timeout: 60000, // 60 second timeout for binary download
       })
+
+      console.log("✅ Browser launched successfully!")
+      return browser
     } catch (error) {
-      console.error("Failed to launch Chromium on Vercel:", error)
+      console.error("❌ Failed to launch Chromium on Vercel:", error)
+      console.error("Error type:", error?.constructor?.name)
       console.error("Error details:", error instanceof Error ? error.stack : String(error))
       
       // Provide more helpful error message
-      if (error instanceof Error && error.message.includes("does not exist")) {
-        throw new Error(
-          `Chromium binary not found. Using remote Chromium executable should resolve this. ` +
-          `The binary will be downloaded automatically on first use. ` +
-          `Please check Vercel function logs for more details. ` +
-          `Original error: ${error.message}`
-        )
+      if (error instanceof Error) {
+        if (error.message.includes("does not exist") || error.message.includes("ENOENT")) {
+          throw new Error(
+            `Chromium binary not found. The @sparticuz/chromium-min package should download it automatically. ` +
+            `This may take longer on the first request. ` +
+            `Original error: ${error.message}`
+          )
+        }
+        if (error.message.includes("timeout")) {
+          throw new Error(
+            `Chromium binary download timed out. This can happen on the first request. ` +
+            `Please try again. Original error: ${error.message}`
+          )
+        }
       }
       
       throw new Error(`Failed to launch browser: ${error instanceof Error ? error.message : String(error)}`)
