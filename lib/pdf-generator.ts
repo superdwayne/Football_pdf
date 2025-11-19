@@ -20,20 +20,25 @@ async function launchBrowser() {
       const chromium = await import("@sparticuz/chromium-min")
       const puppeteer = await import("puppeteer-core")
 
-      const executablePath = await chromium.default.executablePath()
+      // Set font path for Chromium
+      chromium.setFontFile("/var/task/.fonts/NotoSansCJK-Regular.ttc")
+      
+      const executablePath = await chromium.executablePath()
       
       console.log("Chromium executable path:", executablePath)
+      console.log("Chromium args:", chromium.args)
 
-      const headlessValue = chromium.default.headless === true ? true : chromium.default.headless === "new" ? "shell" : true
+      const headlessValue = chromium.headless === true ? true : chromium.headless === "new" ? "shell" : true
 
       return await puppeteer.default.launch({
-        args: chromium.default.args,
-        defaultViewport: chromium.default.defaultViewport,
+        args: chromium.args,
+        defaultViewport: chromium.defaultViewport,
         executablePath,
         headless: headlessValue,
       })
     } catch (error) {
       console.error("Failed to launch Chromium on Vercel:", error)
+      console.error("Error details:", error instanceof Error ? error.stack : String(error))
       throw new Error(`Failed to launch browser: ${error instanceof Error ? error.message : String(error)}`)
     }
   }

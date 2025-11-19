@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Server Actions are enabled by default in Next.js 16+
+  serverExternalPackages: ["puppeteer-core", "@sparticuz/chromium-min"],
 }
 
 module.exports = nextConfig
