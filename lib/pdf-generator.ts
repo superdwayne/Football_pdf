@@ -23,7 +23,7 @@ async function launchBrowser() {
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
       executablePath: await chromium.executablePath(),
-      headless: chromium.headless,
+      headless: chromium.headless === true ? true : chromium.headless === "new" ? "shell" : true,
     })
   }
 
