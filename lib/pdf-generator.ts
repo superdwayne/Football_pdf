@@ -21,26 +21,26 @@ async function launchBrowser() {
       const chromium = await import("@sparticuz/chromium-min")
       const puppeteer = await import("puppeteer-core")
 
-      // chromium-min exports the Chromium class as default
+      // chromium-min v141+ exports differently
       const chromiumInstance = chromium.default || chromium
       
-      // Get executable path - chromium-min handles binary extraction
-      // If CHROMIUM_REMOTE_EXEC_PATH is set, use remote binary, otherwise use local
-      let executablePath: string
-      if (process.env.CHROMIUM_REMOTE_EXEC_PATH) {
-        executablePath = await chromiumInstance.executablePath(process.env.CHROMIUM_REMOTE_EXEC_PATH)
-        console.log("Using remote Chromium executable")
-      } else {
-        executablePath = await chromiumInstance.executablePath()
-        console.log("Using local Chromium executable")
-      }
+      // Get executable path - chromium-min downloads/extracts binary to /tmp on Vercel
+      // The executablePath() method handles the binary download and extraction automatically
+      const executablePath = await chromiumInstance.executablePath()
       console.log("Chromium executable path:", executablePath)
 
-      // Verify the path exists (chromium-min handles this, but we log for debugging)
-      console.log("Chromium args:", chromiumInstance.args)
+      // Use chromium args for serverless environment
+      const args = chromiumInstance.args || [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-accelerated-2d-canvas",
+        "--disable-gpu",
+        "--disable-web-security",
+      ]
 
       return await puppeteer.default.launch({
-        args: chromiumInstance.args,
+        args,
         defaultViewport: { width: 1920, height: 1080 },
         executablePath,
         headless: true,
@@ -52,9 +52,9 @@ async function launchBrowser() {
       // Provide more helpful error message
       if (error instanceof Error && error.message.includes("does not exist")) {
         throw new Error(
-          `Chromium binary not found. The @sparticuz/chromium-min package may need to download the binary at runtime. ` +
-          `This can happen on the first request. Please try again. ` +
-          `If the issue persists, check Vercel function logs for more details. ` +
+          `Chromium binary not found. This is a known issue with @sparticuz/chromium-min on Vercel. ` +
+          `The binary should be downloaded automatically on first use. ` +
+          `Please check Vercel function logs for more details. ` +
           `Original error: ${error.message}`
         )
       }
