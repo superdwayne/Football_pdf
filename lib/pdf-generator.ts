@@ -29,7 +29,15 @@ async function launchBrowser() {
       const chromiumInstance = chromium.default || chromium
       
       console.log("📦 Chromium instance type:", typeof chromiumInstance)
-      console.log("📦 Chromium static methods:", Object.getOwnPropertyNames(chromiumInstance).filter(name => typeof chromiumInstance[name] === 'function'))
+      // Log available methods for debugging
+      const chromiumMethods = Object.getOwnPropertyNames(chromiumInstance).filter(name => {
+        try {
+          return typeof (chromiumInstance as any)[name] === 'function'
+        } catch {
+          return false
+        }
+      })
+      console.log("📦 Chromium static methods:", chromiumMethods)
       
       // Get executable path - chromium-min handles binary download/extraction automatically
       // The executablePath() method downloads and extracts the binary to /tmp on Vercel
