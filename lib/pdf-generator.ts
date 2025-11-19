@@ -28,22 +28,36 @@ async function launchBrowser() {
       // chromium-min v141+ exports differently
       const chromiumInstance = chromium.default || chromium
       
-      console.log("📦 Chromium instance:", typeof chromiumInstance)
-      console.log("📦 Chromium methods:", Object.keys(chromiumInstance))
+      console.log("📦 Chromium instance type:", typeof chromiumInstance)
+      console.log("📦 Chromium static methods:", Object.getOwnPropertyNames(chromiumInstance).filter(name => typeof chromiumInstance[name] === 'function'))
       
-      // Try to get executable path - chromium-min handles binary download/extraction
+      // Get executable path - chromium-min handles binary download/extraction automatically
+      // The executablePath() method downloads and extracts the binary to /tmp on Vercel
       let executablePath: string
       try {
-        // First try without remote path (chromium-min should handle it automatically)
+        // chromium-min v141 automatically downloads the binary from GitHub releases
+        // Call executablePath() without parameters to let it handle everything
+        console.log("📥 Getting Chromium executable path (this may download the binary)...")
         executablePath = await chromiumInstance.executablePath()
-        console.log("✅ Chromium executable path (local):", executablePath)
-      } catch (localError) {
-        console.log("⚠️ Local executable path failed, trying remote...")
-        // If local fails, try with remote URL
-        const REMOTE_CHROMIUM_PATH = process.env.CHROMIUM_REMOTE_EXEC_PATH || 
-          "https://github.com/Sparticuz/chromium/releases/download/v141.0.0/chromium-v141.0.0-pack.tar.br"
-        executablePath = await chromiumInstance.executablePath(REMOTE_CHROMIUM_PATH)
-        console.log("✅ Chromium executable path (remote):", executablePath)
+        console.log("✅ Chromium executable path:", executablePath)
+        
+        // Verify the path exists
+        const fs = await import("fs/promises")
+        try {
+          await fs.access(executablePath)
+          console.log("✅ Chromium binary exists and is accessible")
+        } catch (accessError) {
+          console.warn("⚠️ Chromium binary path exists but may not be accessible:", accessError)
+        }
+      } catch (pathError) {
+        console.error("❌ Failed to get executable path:", pathError)
+        console.error("Path error details:", pathError instanceof Error ? pathError.stack : String(pathError))
+        // Re-throw with more context
+        throw new Error(
+          `Failed to get Chromium executable path. ` +
+          `This usually means the binary download failed. ` +
+          `Error: ${pathError instanceof Error ? pathError.message : String(pathError)}`
+        )
       }
 
       // Get chromium args - these are optimized for serverless
