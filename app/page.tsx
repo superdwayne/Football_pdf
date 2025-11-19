@@ -51,8 +51,8 @@ export default function Home() {
 
       if (searchData.players.length === 0) {
         const errorContent = searchData.error
-          ? `Error searching Airtable: ${searchData.error}`
-          : `No players found in Airtable with the name "${content}". Please try a different name.`
+          ? `Error searching: ${searchData.error}`
+          : `No players found with the name "${content}". Please try a different name.`
 
         const noResultsMessage: Message = {
           id: (Date.now() + 1).toString(),
@@ -90,7 +90,7 @@ export default function Home() {
       let errorText = "Failed to search players. Please try again."
       
       if (error instanceof Error) {
-        errorText = `Error searching Airtable: ${error.message}`
+        errorText = `Error searching: ${error.message}`
       }
       
       const errorMessage: Message = {
@@ -172,10 +172,10 @@ export default function Home() {
 
   const fetchPlayerDetailsAndGeneratePDF = async (recordId: string | number) => {
     try {
-      // Convert to string if needed (Airtable uses string record IDs)
+      // Convert to string if needed
       const recordIdString = typeof recordId === "number" ? String(recordId) : recordId
       
-      // Fetch player details from Airtable
+      // Fetch player details from local database
       const detailsResponse = await fetch("/api/player", {
         method: "POST",
         headers: {
@@ -200,7 +200,7 @@ export default function Home() {
         throw new Error(detailsData.error || "Failed to fetch player details")
       }
 
-      // Generate PDF directly from Airtable via dedicated route
+      // Generate PDF from local player data
       const pdfResponse = await fetch("/api/pdf/from-airtable", {
         method: "POST",
         headers: {
@@ -256,11 +256,11 @@ export default function Home() {
       
       if (error instanceof Error) {
         if (error.message.includes("not found")) {
-          errorText = "Player data not found in Airtable. Please try a different player."
+          errorText = "Player data not found. Please try a different player."
         } else if (error.message.includes("PDF")) {
           errorText = `PDF generation failed: ${error.message}`
         } else {
-          errorText = `Error generating Airtable PDF: ${error.message}`
+          errorText = `Error generating PDF: ${error.message}`
         }
       }
       

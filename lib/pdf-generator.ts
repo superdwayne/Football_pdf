@@ -16,15 +16,27 @@ async function launchBrowser() {
   const isVercel = !!process.env.VERCEL || !!process.env.AWS_REGION
 
   if (isVercel) {
-    const { default: chromium } = await import("@sparticuz/chromium-min")
-    const { default: puppeteer } = await import("puppeteer-core")
+    try {
+      const chromium = await import("@sparticuz/chromium-min")
+      const puppeteer = await import("puppeteer-core")
 
-    return await puppeteer.launch({
-      args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
-      headless: chromium.headless === true ? true : chromium.headless === "new" ? "shell" : true,
-    })
+      // Set Chromium path explicitly for Vercel
+      chromium.setGraphicsMode(false)
+
+      const executablePath = await chromium.executablePath()
+      
+      console.log("Chromium executable path:", executablePath)
+
+      return await puppeteer.default.launch({
+        args: chromium.args,
+        defaultViewport: chromium.defaultViewport,
+        executablePath,
+        headless: chromium.headless,
+      })
+    } catch (error) {
+      console.error("Failed to launch Chromium on Vercel:", error)
+      throw new Error(`Failed to launch browser: ${error instanceof Error ? error.message : String(error)}`)
+    }
   }
 
   const { default: puppeteer } = await import("puppeteer")
