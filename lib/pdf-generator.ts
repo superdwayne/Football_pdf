@@ -20,19 +20,18 @@ async function launchBrowser() {
       const chromium = await import("@sparticuz/chromium-min")
       const puppeteer = await import("puppeteer-core")
 
-      // Set font path for Chromium
-      chromium.setFontFile("/var/task/.fonts/NotoSansCJK-Regular.ttc")
+      const chromiumDefault = chromium.default || chromium
       
-      const executablePath = await chromium.executablePath()
+      const executablePath = await chromiumDefault.executablePath()
       
       console.log("Chromium executable path:", executablePath)
-      console.log("Chromium args:", chromium.args)
+      console.log("Chromium args:", chromiumDefault.args)
 
-      const headlessValue = chromium.headless === true ? true : chromium.headless === "new" ? "shell" : true
+      const headlessValue = chromiumDefault.headless === true ? true : chromiumDefault.headless === "new" ? "shell" : true
 
       return await puppeteer.default.launch({
-        args: chromium.args,
-        defaultViewport: chromium.defaultViewport,
+        args: chromiumDefault.args,
+        defaultViewport: chromiumDefault.defaultViewport,
         executablePath,
         headless: headlessValue,
       })
