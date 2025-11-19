@@ -287,6 +287,7 @@ export class AirtableProvider {
             country: "",
             logo: "",
             flag: "",
+            season: new Date().getFullYear(),
           },
           games: {
             appearences: stats.totalGames,
