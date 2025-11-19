@@ -39,13 +39,11 @@ async function launchBrowser() {
       // Verify the path exists (chromium-min handles this, but we log for debugging)
       console.log("Chromium args:", chromiumInstance.args)
 
-      const headlessValue = chromiumInstance.headless === true ? true : chromiumInstance.headless === "new" ? "shell" : true
-
       return await puppeteer.default.launch({
         args: chromiumInstance.args,
-        defaultViewport: chromiumInstance.defaultViewport || { width: 1920, height: 1080 },
+        defaultViewport: { width: 1920, height: 1080 },
         executablePath,
-        headless: headlessValue,
+        headless: true,
       })
     } catch (error) {
       console.error("Failed to launch Chromium on Vercel:", error)
