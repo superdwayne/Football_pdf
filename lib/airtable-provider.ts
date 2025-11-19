@@ -108,7 +108,7 @@ export class AirtableProvider {
           ;(player as any).recordId = record.id
           return player
         })
-        console.log("✅ Converted players:", players.map(p => ({ 
+        console.log("✅ Converted players:", players.map((p: Player & { recordId?: string }) => ({ 
           id: p.id, 
           name: p.name,
           recordId: (p as any).recordId 
