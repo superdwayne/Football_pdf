@@ -22,9 +22,22 @@ async function launchBrowser() {
 
       const chromiumDefault = chromium.default || chromium
       
-      const executablePath = await chromiumDefault.executablePath()
-      
-      console.log("Chromium executable path:", executablePath)
+      // Get executable path - this may download/extract the binary if needed
+      let executablePath: string
+      try {
+        executablePath = await chromiumDefault.executablePath()
+        console.log("Chromium executable path:", executablePath)
+      } catch (pathError) {
+        console.error("Failed to get Chromium executable path:", pathError)
+        // Try alternative path resolution
+        executablePath = await chromiumDefault.executablePath({
+          path: "/tmp/chromium",
+        }).catch(() => {
+          // If that fails, try without path option
+          return chromiumDefault.executablePath()
+        })
+      }
+
       console.log("Chromium args:", chromiumDefault.args)
 
       const headlessValue = chromiumDefault.headless === true ? true : chromiumDefault.headless === "new" ? "shell" : true
@@ -38,6 +51,16 @@ async function launchBrowser() {
     } catch (error) {
       console.error("Failed to launch Chromium on Vercel:", error)
       console.error("Error details:", error instanceof Error ? error.stack : String(error))
+      
+      // Provide more helpful error message
+      if (error instanceof Error && error.message.includes("does not exist")) {
+        throw new Error(
+          `Chromium binary not found. This may be a Vercel deployment issue. ` +
+          `Please check that @sparticuz/chromium-min is properly installed. ` +
+          `Original error: ${error.message}`
+        )
+      }
+      
       throw new Error(`Failed to launch browser: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
