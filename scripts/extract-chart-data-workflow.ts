@@ -146,7 +146,7 @@ export async function extractChartDataForPlayer(
     // await mcp_cursor_browser_extension_browser_wait_for({ time: 3 });
     
     // Step 2: Extract player ID from URL
-    const playerIdMatch = playerUrl.match(/\\/spieler\\/(\\d+)/);
+    const playerIdMatch = playerUrl.match(/\/spieler\/(\d+)/)
     const playerId = playerIdMatch ? playerIdMatch[1] : '';
     
     if (!playerId) {
