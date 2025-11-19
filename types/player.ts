@@ -154,10 +154,6 @@ export interface PlayerInjury {
     }
     player_id: number
   }[]
-  player: {
-    id: number
-    name: string
-  }
   player_id: number
   player_name: string
   reason: string
