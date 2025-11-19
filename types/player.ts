@@ -157,12 +157,6 @@ export interface PlayerInjury {
   player_id: number
   player_name: string
   reason: string
-  fixture: {
-    id: number
-    timezone: string
-    date: string
-    timestamp: number
-  }
   coach: {
     id: number
     name: string
