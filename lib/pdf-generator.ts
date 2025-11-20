@@ -17,104 +17,39 @@ async function launchBrowser() {
 
   if (isVercel) {
     try {
-      console.log("🔧 Vercel environment detected, using chromium-min")
-      
-      // Import chromium-min - it will handle binary extraction
-      const chromium = await import("@sparticuz/chromium-min")
+      console.log("🔧 Vercel environment detected, using @sparticuz/chromium")
+
+      const chromium = await import("@sparticuz/chromium")
       const puppeteer = await import("puppeteer-core")
 
-      console.log("✅ Chromium and Puppeteer imported successfully")
+      const chromiumInstance: any = (chromium as any).default || chromium
 
-      // chromium-min v141+ exports differently
-      const chromiumInstance = chromium.default || chromium
-      
       console.log("📦 Chromium instance type:", typeof chromiumInstance)
-      // Log available methods for debugging
-      const chromiumMethods = Object.getOwnPropertyNames(chromiumInstance).filter(name => {
-        try {
-          return typeof (chromiumInstance as any)[name] === 'function'
-        } catch {
-          return false
-        }
-      })
-      console.log("📦 Chromium static methods:", chromiumMethods)
-      
-      // Get executable path - chromium-min handles binary download/extraction automatically
-      // The executablePath() method downloads and extracts the binary to /tmp on Vercel
-      let executablePath: string
-      try {
-        // chromium-min v141 automatically downloads the binary from GitHub releases
-        // Call executablePath() without parameters to let it handle everything
-        console.log("📥 Getting Chromium executable path (this may download the binary)...")
-        executablePath = await chromiumInstance.executablePath()
-        console.log("✅ Chromium executable path:", executablePath)
-        
-        // Verify the path exists
-        const fs = await import("fs/promises")
-        try {
-          await fs.access(executablePath)
-          console.log("✅ Chromium binary exists and is accessible")
-        } catch (accessError) {
-          console.warn("⚠️ Chromium binary path exists but may not be accessible:", accessError)
-        }
-      } catch (pathError) {
-        console.error("❌ Failed to get executable path:", pathError)
-        console.error("Path error details:", pathError instanceof Error ? pathError.stack : String(pathError))
-        // Re-throw with more context
-        throw new Error(
-          `Failed to get Chromium executable path. ` +
-          `This usually means the binary download failed. ` +
-          `Error: ${pathError instanceof Error ? pathError.message : String(pathError)}`
-        )
-      }
 
-      // Get chromium args - these are optimized for serverless
-      const args = chromiumInstance.args || [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-accelerated-2d-canvas",
-        "--disable-gpu",
-        "--disable-web-security",
-        "--single-process",
-      ]
+      const executablePath = await chromiumInstance.executablePath()
+      console.log("✅ Chromium executable path:", executablePath)
+
+      const args = chromiumInstance.args
 
       console.log("🚀 Launching Puppeteer with Chromium...")
       console.log("   Executable:", executablePath)
-      console.log("   Args count:", args.length)
+      console.log("   Args count:", Array.isArray(args) ? args.length : "unknown")
 
       const browser = await puppeteer.default.launch({
         args,
-        defaultViewport: { width: 1920, height: 1080 },
+        defaultViewport: chromiumInstance.defaultViewport ?? { width: 1920, height: 1080 },
         executablePath,
-        headless: true,
-        timeout: 60000, // 60 second timeout for binary download
+        headless: chromiumInstance.headless ?? true,
+        timeout: 60000,
       })
 
       console.log("✅ Browser launched successfully!")
       return browser
     } catch (error) {
       console.error("❌ Failed to launch Chromium on Vercel:", error)
-      console.error("Error type:", error?.constructor?.name)
+      console.error("Error type:", (error as any)?.constructor?.name)
       console.error("Error details:", error instanceof Error ? error.stack : String(error))
-      
-      // Provide more helpful error message
-      if (error instanceof Error) {
-        if (error.message.includes("does not exist") || error.message.includes("ENOENT")) {
-          throw new Error(
-            `Chromium binary not found. The @sparticuz/chromium-min package should download it automatically. ` +
-            `This may take longer on the first request. ` +
-            `Original error: ${error.message}`
-          )
-        }
-        if (error.message.includes("timeout")) {
-          throw new Error(
-            `Chromium binary download timed out. This can happen on the first request. ` +
-            `Please try again. Original error: ${error.message}`
-          )
-        }
-      }
-      
+
       throw new Error(`Failed to launch browser: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
@@ -225,6 +160,17 @@ export async function generatePDF(data: ProcessedPlayerData): Promise<Buffer> {
                 const radarCtx = document.getElementById('radarChart');
                 if (radarCtx) {
                   const radarMetrics = chartData.radarChartMetrics;
+                  const resolveMetric = (...keys) => {
+                    for (const key of keys) {
+                      const val = radarMetrics[key]
+                      if (val !== undefined && val !== null) {
+                        const numeric = Number(val)
+                        if (!Number.isNaN(numeric)) return numeric
+                      }
+                    }
+                    return 0
+                  }
+
                   new Chart(radarCtx, {
                     type: 'radar',
                     data: {
@@ -232,30 +178,30 @@ export async function generatePDF(data: ProcessedPlayerData): Promise<Buffer> {
                       datasets: [{
                         label: 'Performance',
                         data: [
-                          radarMetrics.Passes || 0,
-                          radarMetrics.ChancesCreated || 0,
-                          radarMetrics.Shots || 0,
-                          radarMetrics.Touches || 0,
-                          radarMetrics.BallRecovery || 0,
-                          radarMetrics.AerialDuels || 0,
-                          radarMetrics.DefensiveActions || 0,
-                          radarMetrics.PossessionRegains || 0,
-                          radarMetrics.Dribbles || 0
+                          resolveMetric('Passes'),
+                          resolveMetric('ChancesCreated', 'Chances Created'),
+                          resolveMetric('Shots'),
+                          resolveMetric('Touches'),
+                          resolveMetric('BallRecovery', 'Ball Recovery'),
+                          resolveMetric('AerialDuels', 'Aerial Duels'),
+                          resolveMetric('DefensiveActions', 'Defensive Actions'),
+                          resolveMetric('PossessionRegains', 'Possession Regains'),
+                          resolveMetric('Dribbles'),
                         ],
-                        backgroundColor: 'rgba(217, 119, 6, 0.18)',
-                        borderColor: 'rgba(252, 211, 77, 0.95)',
-                        borderWidth: 1.5,
-                        pointBackgroundColor: 'rgba(252, 211, 77, 0.95)',
-                        pointBorderColor: '#022c22',
-                        pointHoverBackgroundColor: '#022c22',
-                        pointHoverBorderColor: 'rgba(252, 211, 77, 1)'
+                        backgroundColor: 'rgba(214, 177, 106, 0.32)',
+                        borderColor: 'rgba(111, 90, 55, 0.9)',
+                        borderWidth: 1.8,
+                        pointBackgroundColor: '#f8d59a',
+                        pointBorderColor: '#6d593a',
+                        pointHoverBackgroundColor: '#6d593a',
+                        pointHoverBorderColor: '#f8d59a'
                       }]
                     },
                     options: {
                       responsive: true,
                       maintainAspectRatio: false,
                       layout: {
-                        padding: 8,
+                        padding: 16,
                       },
                       plugins: {
                         legend: { display: false },
@@ -264,29 +210,29 @@ export async function generatePDF(data: ProcessedPlayerData): Promise<Buffer> {
                       scales: {
                         r: {
                           beginAtZero: true,
-                          max: 100,
+                          suggestedMax: 100,
                           ticks: {
                             stepSize: 20,
-                            color: 'rgba(209, 250, 229, 0.7)',
+                            color: '#7c6a48',
                             backdropColor: 'rgba(0,0,0,0)',
                             showLabelBackdrop: false,
                             font: {
-                              size: 8,
+                              size: 9,
                               family: 'system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif',
                             },
                           },
                           grid: {
-                            color: 'rgba(16, 185, 129, 0.35)',
-                            lineWidth: 0.5,
+                            color: 'rgba(199, 170, 121, 0.65)',
+                            lineWidth: 0.7,
                           },
                           angleLines: {
-                            color: 'rgba(16, 185, 129, 0.45)',
-                            lineWidth: 0.5,
+                            color: 'rgba(199, 170, 121, 0.85)',
+                            lineWidth: 0.7,
                           },
                           pointLabels: {
-                            color: 'rgba(209, 250, 229, 0.9)',
+                            color: '#3b3a30',
                             font: {
-                              size: 9,
+                              size: 11,
                               family: 'system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif',
                             },
                           },
@@ -314,12 +260,11 @@ export async function generatePDF(data: ProcessedPlayerData): Promise<Buffer> {
                           traits.PassingDribbling || traits['Passing + Dribbling'] || 0,
                           traits.SpeedRunsInBehind || traits['Speed and runs in behind'] || 0
                         ],
-                        backgroundColor: 'rgba(16, 185, 129, 0.75)',
-                        borderColor: 'rgba(110, 231, 183, 0.95)',
+                        backgroundColor: 'rgba(197, 154, 74, 0.55)',
+                        borderColor: 'rgba(109, 88, 61, 0.95)',
                         borderWidth: 1,
-                        borderRadius: 6,
-                        // slightly slimmer bars so they sit comfortably inside the card
-                        barThickness: 14,
+                        borderRadius: 8,
+                        barThickness: 16,
                       }]
                     },
                     options: {
@@ -327,8 +272,7 @@ export async function generatePDF(data: ProcessedPlayerData): Promise<Buffer> {
                       maintainAspectRatio: false,
                       indexAxis: 'y',
                       layout: {
-                        // extra right padding to keep bar ends away from the border in PDF
-                        padding: { left: 8, right: 28, top: 8, bottom: 8 },
+                        padding: { left: 12, right: 32, top: 12, bottom: 12 },
                       },
                       plugins: {
                         legend: { display: false },
@@ -337,27 +281,26 @@ export async function generatePDF(data: ProcessedPlayerData): Promise<Buffer> {
                       scales: {
                         x: {
                           beginAtZero: true,
-                          // slight headroom so 99 doesn't touch the frame
                           max: 100,
                           ticks: {
                             stepSize: 20,
-                            color: 'rgba(209, 250, 229, 0.7)',
+                            color: '#7c6a48',
                             font: {
                               size: 9,
                               family: 'system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif',
                             },
                           },
                           grid: {
-                            color: 'rgba(6, 95, 70, 0.7)',
-                            lineWidth: 0.5,
+                            color: 'rgba(199, 170, 121, 0.35)',
+                            lineWidth: 0.6,
                           },
                           border: {
-                            color: 'rgba(16, 185, 129, 0.9)',
+                            color: 'rgba(109, 88, 61, 0.8)',
                           },
                         },
                         y: {
                           ticks: {
-                            color: 'rgba(209, 250, 229, 0.9)',
+                            color: '#3b3a30',
                             font: {
                               size: 10,
                               family: 'system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif',
@@ -397,13 +340,13 @@ export async function generatePDF(data: ProcessedPlayerData): Promise<Buffer> {
                       datasets: [{
                         label: 'TFG Rating',
                         data: values,
-                        borderColor: 'rgba(252, 211, 77, 0.95)',
-                        backgroundColor: 'rgba(180, 83, 9, 0.18)',
-                        borderWidth: 1.8,
+                        borderColor: 'rgba(111, 90, 55, 0.95)',
+                        backgroundColor: 'rgba(214, 177, 106, 0.25)',
+                        borderWidth: 2,
                         fill: true,
                         tension: 0.35,
-                        pointBackgroundColor: 'rgba(252, 211, 77, 0.98)',
-                        pointBorderColor: '#022c22',
+                        pointBackgroundColor: '#f8d59a',
+                        pointBorderColor: '#6d593a',
                         pointRadius: 3.5,
                         pointHoverRadius: 5,
                       }]
@@ -412,7 +355,7 @@ export async function generatePDF(data: ProcessedPlayerData): Promise<Buffer> {
                       responsive: true,
                       maintainAspectRatio: false,
                       layout: {
-                        padding: { left: 12, right: 16, top: 8, bottom: 8 },
+                        padding: { left: 16, right: 18, top: 10, bottom: 12 },
                       },
                       plugins: {
                         legend: { display: false },
@@ -421,39 +364,38 @@ export async function generatePDF(data: ProcessedPlayerData): Promise<Buffer> {
                       scales: {
                         y: {
                           beginAtZero: false,
-                          // dynamic range with padding so line sits centrally and never clips
                           min: minVal - padding,
                           max: maxVal + padding,
                           ticks: {
                             stepSize: 10,
-                            color: 'rgba(209, 250, 229, 0.7)',
+                            color: '#7c6a48',
                             font: {
                               size: 9,
                               family: 'system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif',
                             },
                           },
                           grid: {
-                            color: 'rgba(6, 95, 70, 0.8)',
-                            lineWidth: 0.5,
+                            color: 'rgba(199, 170, 121, 0.35)',
+                            lineWidth: 0.6,
                           },
                           border: {
-                            color: 'rgba(16, 185, 129, 0.9)',
+                            color: 'rgba(109, 88, 61, 0.8)',
                           },
                         },
                         x: {
                           ticks: {
-                            color: 'rgba(209, 250, 229, 0.9)',
+                            color: '#3b3a30',
                             font: {
                               size: 10,
                               family: 'system-ui, -apple-system, BlinkMacSystemFont, "Inter", sans-serif',
                             },
                           },
                           grid: {
-                            color: 'rgba(6, 95, 70, 0.6)',
-                            lineWidth: 0.5,
+                            color: 'rgba(199, 170, 121, 0.25)',
+                            lineWidth: 0.6,
                           },
                           border: {
-                            color: 'rgba(16, 185, 129, 0.9)',
+                            color: 'rgba(109, 88, 61, 0.8)',
                           },
                         },
                       },
@@ -548,7 +490,8 @@ export async function generatePDF(data: ProcessedPlayerData): Promise<Buffer> {
         throw new Error("PDF generation timed out. Please try again.")
       }
       if (error.message.includes("browser") || error.message.includes("puppeteer")) {
-        throw new Error("Failed to launch browser. Please ensure Puppeteer dependencies are installed.")
+        // Surface the underlying browser error so we can diagnose Chromium/Puppeteer issues
+        throw new Error(`Failed to launch browser: ${error.message}`)
       }
     }
     

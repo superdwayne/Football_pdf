@@ -221,61 +221,48 @@ export function PlayerReport({ data }: PlayerReportProps) {
             </div>
           </section>
 
-          <section className={`${sectionClass} p-4`}>
-            <p className={sectionTitleClass}>General Strengths and Weaknesses</p>
-            <div
-              className="mt-2 grid gap-4"
-              style={{ gridTemplateColumns: "1.4fr 2.6fr" }}
-            >
-              <div className="space-y-3">
-                <p className="text-[10px] uppercase tracking-[0.28em] text-emerald-200/70 mb-2">Strengths</p>
-                <ul className="space-y-2 text-xs text-emerald-50">
-                  {(data.strengths.length ? data.strengths : [{ category: "No data", percentile: 0 }]).slice(0, 5).map((strength, idx) => (
-                    <li key={`strength-${idx}`} className="flex items-center justify-between rounded-md bg-emerald-950/50 px-3 py-2">
-                      <span>{strength.category}</span>
-                      <span className="text-amber-200">{strength.percentile}th percentile</span>
-                    </li>
-                  ))}
-                </ul>
-                <p className="text-[10px] uppercase tracking-[0.28em] text-emerald-200/70 mb-2 mt-4">Weaknesses</p>
-                <ul className="space-y-2 text-xs text-emerald-50">
-                  {(data.weaknesses.length ? data.weaknesses : [{ category: "No data", percentile: 0 }]).slice(0, 5).map((weakness, idx) => (
-                    <li key={`weakness-${idx}`} className="flex items-center justify-between rounded-md bg-emerald-950/50 px-3 py-2">
-                      <span>{weakness.category}</span>
-                      <span className="text-emerald-200">{weakness.percentile}th percentile</span>
-                    </li>
-                  ))}
-                </ul>
+          <section className="rounded-2xl border border-[#dacfb4] bg-[#f9f4e4] p-6 text-[#24332c]">
+            <p className="text-xs font-semibold tracking-[0.25em] uppercase text-[#3a4b40]">General Strengths and Weaknesses</p>
+            <div className="mt-4 grid gap-5 md:grid-cols-[1.4fr_2.6fr]">
+              <div className="space-y-4">
+                <div className="rounded-2xl bg-[#c59a4a] px-5 py-4 text-white shadow-sm">
+                  <p className="text-[11px] uppercase tracking-[0.3em] text-white/70">Strengths</p>
+                  <ul className="mt-3 space-y-2 text-sm font-medium">
+                    {(data.strengths.length ? data.strengths : [{ category: "No data", percentile: 0 }])
+                      .slice(0, 4)
+                      .map((strength, idx) => (
+                        <li key={`strength-${idx}`} className="flex items-center justify-between">
+                          <span>{strength.category}</span>
+                          <span className="font-semibold">{strength.percentile}th percentile</span>
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+                <div className="rounded-2xl border border-[#e6d7b6] bg-white px-5 py-4 text-[#3f3a2f] shadow-sm">
+                  <p className="text-[11px] uppercase tracking-[0.3em] text-[#ac8a43]">Weaknesses</p>
+                  <ul className="mt-3 space-y-2 text-sm">
+                    {(data.weaknesses.length ? data.weaknesses : [{ category: "No data", percentile: 0 }])
+                      .slice(0, 4)
+                      .map((weakness, idx) => (
+                        <li key={`weakness-${idx}`} className="flex items-center justify-between">
+                          <span>{weakness.category}</span>
+                          <span className="font-semibold text-[#8b7351]">{weakness.percentile}th percentile</span>
+                        </li>
+                      ))}
+                  </ul>
+                </div>
               </div>
-              <div>
+              <div className="rounded-2xl border border-[#dfd6be] bg-white/90 px-4 py-4 shadow-inner">
                 {data.chartData?.radarChartMetrics && radarRows.length > 0 ? (
-                  <>
-                    <div className="relative h-64">
-                      <canvas
-                        id="radarChart"
-                        className="h-full"
-                        style={{ width: "96%", margin: "0 auto", display: "block" }}
-                      />
-                    </div>
-                    <table className="mt-2 w-full text-[11px] text-emerald-50">
-                      <thead>
-                        <tr>
-                          <th className="text-left text-emerald-200/80">Metric</th>
-                          <th className="text-right text-emerald-200/80">Score</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {radarRows.map((row) => (
-                          <tr key={row.metric} className="text-emerald-50/90">
-                            <td className="pt-1 pb-1 text-xs uppercase tracking-[0.18em]">{row.metric}</td>
-                            <td className="text-right">{row.value ?? 0}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </>
+                  <div className="relative h-64">
+                    <canvas
+                      id="radarChart"
+                      className="h-full"
+                      style={{ width: "95%", margin: "0 auto", display: "block" }}
+                    />
+                  </div>
                 ) : (
-                  <div className="h-64 flex items-center justify-center rounded-md bg-emerald-950/50 text-emerald-200/50 text-xs">
+                  <div className="h-64 flex items-center justify-center rounded-md bg-white text-[#8b8676] text-xs">
                     Chart data not available
                   </div>
                 )}
